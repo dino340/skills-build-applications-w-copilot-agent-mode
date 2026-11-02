@@ -1,23 +1,20 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { getJson } from '../api/client.js';
 
-type Props<T, K extends string> = {
+type Props<T> = {
   title: string;
   description: string;
-  endpoint: string;
-  responseKey: K;
+  loadItems: () => Promise<T[]>;
   emptyMessage: string;
   renderItem: (item: T) => ReactNode;
 };
 
-export function CapabilityCard<T, K extends string>({
+export function CapabilityCard<T>({
   title,
   description,
-  endpoint,
-  responseKey,
+  loadItems,
   emptyMessage,
   renderItem,
-}: Props<T, K>) {
+}: Props<T>) {
   const [items, setItems] = useState<T[]>();
   const [error, setError] = useState<string>();
 
@@ -25,9 +22,9 @@ export function CapabilityCard<T, K extends string>({
     let active = true;
     setItems(undefined);
     setError(undefined);
-    getJson<Record<K, T[]>>(endpoint)
-      .then((response) => {
-        if (active) setItems(response[responseKey]);
+    loadItems()
+      .then((loadedItems) => {
+        if (active) setItems(loadedItems);
       })
       .catch((requestError: unknown) => {
         if (active) setError(requestError instanceof Error ? requestError.message : 'Request failed');
@@ -35,7 +32,7 @@ export function CapabilityCard<T, K extends string>({
     return () => {
       active = false;
     };
-  }, [endpoint, responseKey]);
+  }, [loadItems]);
 
   return (
     <section className="card h-100">
